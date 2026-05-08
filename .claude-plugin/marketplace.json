@@ -1,0 +1,31 @@
+{
+  "name": "excalidraw-diagram-plugin",
+  "description": "Excalidraw diagram skill — varied visual patterns, charts, dark mode, lint, render pipeline",
+  "version": "1.0.0",
+  "owner": {
+    "name": "Gilberts Ahumada",
+    "email": "gilbertsahumada@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "excalidraw-diagram",
+      "source": "./",
+      "description": "Create Excalidraw diagrams that argue visually — fan-out, timeline, tree, grid, evidence artifacts, charts (bar/line/grouped/grid_table/card_grid), light + dark mode, Playwright render pipeline.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Gilberts Ahumada",
+        "email": "gilbertsahumada@gmail.com"
+      },
+      "homepage": "https://github.com/gilbertsahumada/excalidraw-diagram-plugin",
+      "license": "MIT",
+      "keywords": [
+        "excalidraw",
+        "diagram",
+        "visualization",
+        "architecture",
+        "charts",
+        "documentation"
+      ]
+    }
+  ]
+}

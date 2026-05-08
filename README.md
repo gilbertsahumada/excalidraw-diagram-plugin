@@ -2,7 +2,11 @@
 
 Generate `.excalidraw` JSON diagrams that **argue visually** — fan-outs, timelines, trees, grids, evidence artifacts, charts, light + dark mode. Built for Claude Code as a skill, distributed as a plugin.
 
-![demo](https://raw.githubusercontent.com/gilbertsahumada/excalidraw-diagram-plugin/main/docs/demo.png)
+## Examples
+
+| Light mode (varied patterns) | Grid layouts | Dark mode |
+|------------------------------|--------------|-----------|
+| ![light](./docs/preview-light.png) | ![grids](./docs/preview-grids.png) | ![dark](./docs/preview-dark.png) |
 
 ## What this plugin gives you
 
@@ -17,23 +21,36 @@ Generate `.excalidraw` JSON diagrams that **argue visually** — fan-outs, timel
 
 ## Install
 
-### Via Claude Code (recommended)
+### Via Claude Code plugin (recommended) — two steps
 
 ```
-/plugin install github.com/gilbertsahumada/excalidraw-diagram-plugin
+/plugin marketplace add gilbertsahumada/excalidraw-diagram-plugin
+/plugin install excalidraw-diagram@excalidraw-diagram-plugin
 ```
 
-Pin a version:
+After install, the skill is namespaced as `excalidraw-diagram:excalidraw-diagram`.
+
+To list / update / remove:
 
 ```
-/plugin install github.com/gilbertsahumada/excalidraw-diagram-plugin@v1.0.0
+/plugin list
+/plugin update excalidraw-diagram
+/plugin remove excalidraw-diagram
 ```
 
-### Manual
+### Manual (skill-only, no plugin system)
 
 ```bash
 git clone https://github.com/gilbertsahumada/excalidraw-diagram-plugin.git
 cp -r excalidraw-diagram-plugin/skills/excalidraw-diagram .claude/skills/
+```
+
+### Local plugin testing (before pushing changes)
+
+```bash
+# Add your local clone as a marketplace
+/plugin marketplace add /path/to/excalidraw-diagram-plugin
+/plugin install excalidraw-diagram@excalidraw-diagram-plugin
 ```
 
 ## One-time setup (renderer)
