@@ -25,6 +25,32 @@ elements.extend(code_block(
 ))
 ```
 
+### File-tree diagrams (v1.3.0+)
+
+`charts.file_tree()` renders a nested directory structure with proper box-drawing connectors. Folders, files, branches and inline comments are each their own colored span — no images, no SVG, just native Excalidraw text elements.
+
+![file tree](./docs/preview-file-tree.png)
+
+```python
+from charts import file_tree
+elements.extend(file_tree(
+    x=80, y=80,
+    tree=[
+        ("project/", [
+            ("src/", [
+                ("main.py", "# entry point"),
+                ("util.py", None),
+            ]),
+            ("README.md", "# docs"),
+        ]),
+    ],
+    font_size=14,
+    theme_name="dark",
+))
+```
+
+Convention: trailing `/` ⇒ folder (payload is list of children); no slash ⇒ file (payload is comment string or `None`).
+
 ## Before / after — what the tooling fixes
 
 Same prompt ("MCP host/client/server architecture"), same agent, same model. Left: skill methodology only. Right: methodology + Python tooling (`layout`, `lint`, `charts`, evidence-artifact exception).
@@ -40,7 +66,7 @@ Across an entire 10-diagram run, total lint issues dropped **15 → 0** (-100%) 
 
 - **Design methodology** (`SKILL.md`) — visual argument patterns, evidence artifacts, fill/stroke styles, multi-zoom architecture, dark mode
 - **Layout helpers** (`references/layout.py`) — `fan_out`, `timeline`, `tree`, `side_by_side`, `section`, `stack`, `grid`, `estimate_text_size`
-- **Charts** (`references/charts.py`) — `bar_chart`, `line_chart`, `grouped_bar_chart`, `pie_slice_approximation`, `card_grid`, `grid_table`
+- **Charts** (`references/charts.py`) — `bar_chart`, `line_chart`, `grouped_bar_chart`, `pie_slice_approximation`, `card_grid`, `grid_table`, `code_block`, `file_tree`
 - **Pre-render lint** (`references/lint.py`) — overlap, dangling arrows, text overflow, container ratio (with evidence-artifact exception)
 - **Section append CLI** (`references/append_section.py`) — merge sections with auto seed-namespacing
 - **Pattern gallery** (`examples/`) — 6 starter `.excalidraw` files (fan-out, timeline, tree, side-by-side, assembly-line, convergence)

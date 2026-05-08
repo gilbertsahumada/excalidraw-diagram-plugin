@@ -608,6 +608,29 @@ elements.extend(code_block(
 
 Use `code_block` instead of plain dark rect + green text whenever the diagram contains real source code. It produces ~40-100 text elements per block but renders with proper IDE-like coloring.
 
+- `file_tree(x, y, tree, font_size, theme_name, ...)` — **directory structure as a diagram**. Takes a nested list of `(name, payload)` tuples. Trailing `/` on a name marks it as a folder (payload = list of children); no slash marks it as a file (payload = inline comment string or `None`). Renders with proper `├──`/`│   `/`└──` connectors, three colored spans per row (branch · name · comment), comments aligned in a fixed column.
+
+```python
+from charts import file_tree
+
+elements.extend(file_tree(
+    x=80, y=80,
+    tree=[
+        ("project/", [
+            ("src/", [
+                ("main.py", "# entry point"),
+                ("util.py", None),
+            ]),
+            ("README.md", "# docs"),
+        ]),
+    ],
+    font_size=14,
+    theme_name="dark",
+))
+```
+
+Prefer `file_tree` over hand-drawing a tree with rectangles + connectors when you want a code-listing style structure (e.g., showing repo layout in onboarding diagrams).
+
 ### Examples gallery — `examples/`
 
 Six pattern starters. Copy and modify rather than build from scratch:

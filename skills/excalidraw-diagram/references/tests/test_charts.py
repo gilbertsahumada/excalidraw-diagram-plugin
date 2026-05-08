@@ -71,3 +71,45 @@ def test_grouped_bar_chart():
         {"A": [("x", 1), ("y", 2)], "B": [("x", 3), ("y", 4)]},
     )
     assert len(result) > 0
+
+
+# ---------------------------------------------------------------------------
+# file_tree tests
+# ---------------------------------------------------------------------------
+
+
+def test_file_tree_returns_elements():
+    """file_tree returns 1 bg rect + N text spans for a small tree."""
+    from charts import file_tree
+    tree = [
+        ("project/", [
+            ("src/", [
+                ("main.py", "# entry point"),
+                ("util.py", None),
+            ]),
+            ("README.md", None),
+        ]),
+    ]
+    result = file_tree(80, 80, tree, font_size=14, theme_name="dark")
+    assert isinstance(result, list)
+    # 1 bg + at least 1 span per row (5 rows here, more spans where comments exist)
+    assert len(result) >= 6
+    assert result[0].get("type") == "rectangle"
+    assert all(el.get("type") in {"rectangle", "text"} for el in result)
+
+
+def test_file_tree_folder_color_differs_from_file_color():
+    """Folder names render in a different color than file names."""
+    from charts import file_tree
+    tree = [("project/", [("README.md", None)])]
+    result = file_tree(0, 0, tree, theme_name="dark")
+    name_spans = [el for el in result if "_name" in el.get("id", "")]
+    colors = {el["text"]: el["strokeColor"] for el in name_spans}
+    assert colors["project/"] != colors["README.md"]
+
+
+def test_file_tree_rejects_invalid_payload():
+    """Folder with non-list payload raises ValueError."""
+    from charts import file_tree
+    with pytest.raises(ValueError):
+        file_tree(0, 0, [("bad/", "not a list")])

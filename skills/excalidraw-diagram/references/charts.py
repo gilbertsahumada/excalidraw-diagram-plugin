@@ -1362,6 +1362,205 @@ def code_block(
     return elements
 
 
+def file_tree(
+    x: int,
+    y: int,
+    tree: list,
+    font_size: int = 14,
+    padding: int = 16,
+    seed_base: int = 970000,
+    theme_name: str = "dark",
+    background: str | None = None,
+    rounded: bool = True,
+    folder_color: str | None = None,
+    file_color: str | None = None,
+    branch_color: str | None = None,
+    comment_color: str | None = None,
+) -> list[dict[str, Any]]:
+    """Generate an ASCII file-tree diagram as Excalidraw elements.
+
+    Renders a directory structure using box-drawing characters
+    (├── │   └──) with three color spans per line: branch prefix,
+    name (folder vs file), and trailing comment. Output mimics the
+    `tree` CLI but as native Excalidraw text — each span is its own
+    element so colors can vary within a line.
+
+    Tree input format — list of `(name, payload)` tuples:
+      - name ending in "/" ⇒ folder; payload must be a list of children
+      - name without trailing "/" ⇒ file; payload is comment string or None
+
+    Example:
+        tree = [
+            ("project/", [
+                ("src/", [
+                    ("main.py", "# entry point"),
+                    ("utils.py", None),
+                ]),
+                ("README.md", "# docs"),
+            ]),
+        ]
+
+    Args:
+        x, y: top-left of the block (background rect origin)
+        tree: nested list of (name, payload) tuples (see format above)
+        font_size: monospace font size (default 14)
+        padding: inner padding inside the background rect
+        seed_base: starting seed; needs ~3 × n_lines room
+        theme_name: "dark" (default) or "light"
+        background: explicit bg color, or None to use theme's evidence_bg
+        rounded: rounded corners on background rect
+        folder_color/file_color/branch_color/comment_color: overrides;
+            None ⇒ theme defaults
+
+    Returns: list of Excalidraw elements (1 background rect + N text spans)
+    """
+    # Theme defaults — folders bright, files default text, branches/comments muted
+    if theme_name == "dark":
+        f_color = folder_color or "#60a5fa"     # blue
+        n_color = file_color or "#f1f5f9"       # near-white
+        b_color = branch_color or "#475569"     # slate-600 muted
+        c_color = comment_color or "#64748b"    # slate-500 muted
+        bg = background or "#020617"
+    else:
+        f_color = folder_color or "#1e40af"
+        n_color = file_color or "#1f2937"
+        b_color = branch_color or "#94a3b8"
+        c_color = comment_color or "#64748b"
+        bg = background or "#f8fafc"
+
+    char_w = max(1, round(font_size * 0.6))
+    line_h = round(font_size * 1.5)
+
+    # Walk the tree, flatten into rows: (prefix_str, name, is_dir, comment)
+    rows: list[tuple[str, str, bool, str | None]] = []
+
+    def _walk(items: list, prefix_parts: list[str]) -> None:
+        n = len(items)
+        for i, item in enumerate(items):
+            if not isinstance(item, tuple) or len(item) != 2:
+                raise ValueError(
+                    f"file_tree: each item must be (name, payload) tuple; got {item!r}"
+                )
+            name, payload = item
+            is_last = i == n - 1
+            connector = "└── " if is_last else "├── "
+            prefix = "".join(prefix_parts) + connector
+            is_dir = name.endswith("/")
+            comment: str | None = None
+            children: list = []
+            if is_dir:
+                if not isinstance(payload, list):
+                    raise ValueError(
+                        f"file_tree: folder {name!r} must have list payload; got {payload!r}"
+                    )
+                children = payload
+            else:
+                comment = payload if isinstance(payload, str) else None
+            rows.append((prefix, name, is_dir, comment))
+            if is_dir and children:
+                next_part = "    " if is_last else "│   "
+                _walk(children, prefix_parts + [next_part])
+
+    # Top-level: roots have no branch prefix (mimics `tree` output)
+    if not isinstance(tree, list):
+        raise ValueError("file_tree: tree must be a list of (name, payload) tuples")
+    for i, item in enumerate(tree):
+        if not isinstance(item, tuple) or len(item) != 2:
+            raise ValueError(
+                f"file_tree: each item must be (name, payload) tuple; got {item!r}"
+            )
+        name, payload = item
+        is_dir = name.endswith("/")
+        comment: str | None = None
+        children: list = []
+        if is_dir:
+            if not isinstance(payload, list):
+                raise ValueError(
+                    f"file_tree: folder {name!r} must have list payload; got {payload!r}"
+                )
+            children = payload
+        else:
+            comment = payload if isinstance(payload, str) else None
+        rows.append(("", name, is_dir, comment))
+        if is_dir and children:
+            _walk(children, [])
+
+    # Compute name-column width so comments align like a real `tree` listing
+    name_col_chars = max(
+        (len(prefix) + len(name) for prefix, name, _, _ in rows), default=1
+    )
+    comment_gap_chars = 2  # spaces between name and comment
+    comment_col = name_col_chars + comment_gap_chars
+
+    # Bbox width: account for comment alignment — a long comment on a
+    # short-prefix line is shifted right to comment_col, so its right edge
+    # is `comment_col + len(comment)`, NOT the sum of its own line's parts.
+    max_line_chars = max(
+        (
+            comment_col + len(comment) if comment
+            else len(prefix) + len(name)
+            for prefix, name, _, comment in rows
+        ),
+        default=1,
+    )
+    block_w = max_line_chars * char_w + padding * 2
+    block_h = len(rows) * line_h + padding * 2
+
+    elements: list[dict[str, Any]] = []
+    seed = seed_base
+
+    bg_rect = _rect(
+        f"tree_{seed}_bg", x, y, block_w, block_h,
+        seed, bg, bg, stroke_width=1, rounded=rounded,
+    )
+    elements.append(bg_rect)
+    seed += 1
+
+    th = font_size + 4
+
+    for line_idx, (prefix, name, is_dir, comment) in enumerate(rows):
+        ty = y + padding + line_idx * line_h
+
+        # Span 1: branch prefix (├──, │   , etc) — only if non-empty
+        if prefix:
+            t = _text(
+                f"tree_{seed}_branch", x + padding, ty,
+                len(prefix) * char_w, th, prefix, seed,
+                color=b_color, font_size=font_size,
+                text_align="left", vertical_align="top",
+            )
+            t["fontFamily"] = 3
+            elements.append(t)
+            seed += 1
+
+        # Span 2: name (folder or file)
+        name_x = x + padding + len(prefix) * char_w
+        t = _text(
+            f"tree_{seed}_name", name_x, ty,
+            len(name) * char_w, th, name, seed,
+            color=f_color if is_dir else n_color, font_size=font_size,
+            text_align="left", vertical_align="top",
+        )
+        t["fontFamily"] = 3
+        elements.append(t)
+        seed += 1
+
+        # Span 3: aligned comment, if any
+        if comment:
+            cx = x + padding + comment_col * char_w
+            t = _text(
+                f"tree_{seed}_comment", cx, ty,
+                len(comment) * char_w, th, comment, seed,
+                color=c_color, font_size=font_size,
+                text_align="left", vertical_align="top",
+            )
+            t["fontFamily"] = 3
+            elements.append(t)
+            seed += 1
+
+    return elements
+
+
 def grid_table(
     x: int,
     y: int,
