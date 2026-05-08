@@ -158,6 +158,47 @@ Evidence artifacts, code snippets, and concrete examples within each section. Th
 
 **The container test**: For each boxed element, ask "Would this work as free-floating text?" If yes, remove the container.
 
+### Text inside a shape MUST be centered
+
+When you DO put text inside a rectangle/ellipse/diamond, it must be centered both horizontally AND vertically. Top-aligned text inside a tall rectangle looks broken.
+
+**Pattern: text bbox SMALLER than container, manually y-centered, bound via containerId.**
+
+```json
+// rectangle (container) — 240×80
+{
+  "type": "rectangle",
+  "id": "tile_a",
+  "x": 100, "y": 100, "width": 240, "height": 80,
+  "boundElements": [{"id": "tile_a_text", "type": "text"}],
+  ...
+}
+// text — own bbox sized for the text content, y-offset to vertically center
+//   text dims via estimate_text_size("STDIO transport", fontSize=16, fontFamily=3) → e.g. (135, 23)
+//   y = container.y + (container.h - text.h) / 2 = 100 + (80 - 23)/2 = 128
+{
+  "type": "text",
+  "id": "tile_a_text",
+  "x": 100, "y": 128, "width": 240, "height": 23,
+  "containerId": "tile_a",
+  "text": "STDIO transport",
+  "textAlign": "center",
+  "verticalAlign": "middle",
+  "fontSize": 16, "fontFamily": 3,
+  ...
+}
+```
+
+Why this pattern (and not text bbox = container bbox):
+
+- Excalidraw's render engine glues the text glyph to the TOP of its own bbox when bbox.height >> text content height — `verticalAlign: middle` does not save you. So the text's own height MUST be close to the actual rendered text height.
+- Use `estimate_text_size(text, font_size, font_family)` from `references/layout.py` to compute the right (width, height) for the text bbox.
+- Then offset `y = container.y + (container.h - text.h) / 2` to center vertically.
+- `textAlign: "center"` + matching width = container's width handles horizontal centering.
+- `containerId` + `boundElements` keeps the logical binding so move/resize stays consistent.
+
+If a shape has multiple text elements (e.g. title + body), only one can be the container's bound text. The others belong **free-floating below the shape**, not inside it.
+
 ---
 
 ## Design Process (Do This BEFORE Generating JSON)

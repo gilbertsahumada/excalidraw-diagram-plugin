@@ -115,20 +115,44 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
 }
 ```
 
-## Text (centered in shape)
+## Text centered inside a shape (REQUIRED pattern)
+
+**RULE**: text inside a rectangle/ellipse/diamond MUST be centered both axes.
+
+**The text's own bbox must match the rendered text size — NOT the container's size.** Then offset y so the text bbox is vertically centered inside the container. Excalidraw 0.18.x glues glyphs to the TOP of their bbox when bbox is much taller than text; `verticalAlign:"middle"` does not save you.
+
+Use `estimate_text_size(text, fontSize, fontFamily)` from `references/layout.py` to compute the text bbox. Then:
+
+```python
+text_w, text_h = estimate_text_size(label, font_size=16, font_family=3)
+text_x = container_x                                  # span container width
+text_y = container_y + (container_h - text_h) // 2    # vertical center
+text_width  = container_w
+text_height = text_h
+```
+
 ```json
+// container (the shape) — 180×90 at (100,100)
+{
+  "type": "rectangle",
+  "id": "elem1",
+  "x": 100, "y": 100, "width": 180, "height": 90,
+  "boundElements": [{"id": "text1", "type": "text"}],
+  "...": "rest of fields per Rectangle template"
+}
+
+// text — own height (~23 for fontSize 16), y offset to center inside container
 {
   "type": "text",
   "id": "text1",
-  "x": 130, "y": 132,
-  "width": 120, "height": 25,
+  "x": 100, "y": 134, "width": 180, "height": 23,
   "text": "Process",
   "originalText": "Process",
   "fontSize": 16,
   "fontFamily": 3,
   "textAlign": "center",
   "verticalAlign": "middle",
-  "strokeColor": "<text color — match parent shape's stroke or use 'on light/dark fills' from palette>",
+  "strokeColor": "<text color from palette>",
   "backgroundColor": "transparent",
   "fillStyle": "solid",
   "strokeWidth": 1,
@@ -148,6 +172,32 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
   "lineHeight": 1.25
 }
 ```
+
+### What NOT to do
+
+```json
+// WRONG #1 — text bbox = container bbox → glyphs glue to top of container
+{
+  "type": "text",
+  "x": 100, "y": 100, "width": 180, "height": 90,  // ❌ height matches container
+  "verticalAlign": "middle"                          // ignored when bbox >> text
+}
+
+// WRONG #2 — not bound, text floats over shape
+{
+  "type": "text",
+  "containerId": null,  // ❌
+  "x": 130, "y": 132    // ❌ manual offset, drifts
+}
+
+// WRONG #3 — alignments off
+{
+  "textAlign": "left",       // ❌ must be "center"
+  "verticalAlign": "top"     // ❌ must be "middle"
+}
+```
+
+If you need 2 text elements inside one shape (title + body), only one can be the container's bound text. The other belongs OUTSIDE the shape as free-floating text below it.
 
 ## Arrow
 ```json

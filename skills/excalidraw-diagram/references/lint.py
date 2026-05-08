@@ -283,6 +283,126 @@ def check_missing_required_fields(
     return warnings
 
 
+def check_text_centering(elements: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Text inside a shape MUST be centered both axes via the containerId pattern.
+
+    Catches three failure modes:
+      1. Text has containerId but textAlign != "center" or verticalAlign != "middle"
+         → renders top/left-aligned, looks broken.
+      2. Text is geometrically inside a non-evidence shape but has no containerId
+         → free-floating text glued to top of shape (the regression we hit).
+      3. Container's boundElements does not list back the bound text
+         → reverse link missing, Excalidraw can't center.
+
+    Evidence artifacts (backgroundColor == EVIDENCE_BG) are exempt — code
+    blocks intentionally use top-left alignment.
+    """
+    warnings: list[dict[str, Any]] = []
+    by_id = {el.get("id"): el for el in _live(elements) if el.get("id")}
+
+    # Failure mode 1 + 3: explicit containerId set but alignment wrong / reverse link missing
+    for el in _live(elements):
+        if el.get("type") != "text":
+            continue
+        cid = el.get("containerId")
+        if not cid:
+            continue
+        if el.get("textAlign") != "center" or el.get("verticalAlign") != "middle":
+            warnings.append(
+                {
+                    "type": "text-not-centered",
+                    "msg": (
+                        f"text '{el.get('id')}' has containerId='{cid}' but "
+                        f"textAlign={el.get('textAlign')!r} verticalAlign="
+                        f"{el.get('verticalAlign')!r} (must be 'center' / 'middle')"
+                    ),
+                    "ids": [el.get("id"), cid],
+                }
+            )
+        container = by_id.get(cid)
+        if container is not None:
+            bound = container.get("boundElements") or []
+            if not any(
+                isinstance(b, dict) and b.get("id") == el.get("id") for b in bound
+            ):
+                warnings.append(
+                    {
+                        "type": "text-binding-broken",
+                        "msg": (
+                            f"text '{el.get('id')}' references container '{cid}' "
+                            f"but container's boundElements does not include it back"
+                        ),
+                        "ids": [el.get("id"), cid],
+                    }
+                )
+
+    # Failure mode 4: bound text bbox >> actual text height → glyphs glue to top
+    # Excalidraw 0.18.x doesn't honor verticalAlign:middle when bbox is much
+    # taller than the rendered text. Recompute expected height; flag if delta > 2x.
+    for el in _live(elements):
+        if el.get("type") != "text" or not el.get("containerId"):
+            continue
+        text_str = el.get("text", "") or ""
+        font_size = el.get("fontSize", 16) or 16
+        n_lines = max(text_str.count("\n") + 1, 1)
+        # Expected single-line text height with default lineHeight ~1.25-1.4
+        expected_h = n_lines * font_size * 1.4
+        actual_h = el.get("height", 0) or 0
+        if actual_h > expected_h * 2 and actual_h - expected_h > 20:
+            warnings.append(
+                {
+                    "type": "text-bbox-too-tall",
+                    "msg": (
+                        f"text '{el.get('id')}' has height={actual_h:.0f}px but "
+                        f"content needs ~{expected_h:.0f}px. Excalidraw will glue "
+                        f"glyphs to TOP — set text.height to estimate_text_size() "
+                        f"and offset y to center inside container."
+                    ),
+                    "ids": [el.get("id"), el.get("containerId")],
+                }
+            )
+
+    # Failure mode 2: text geometrically inside non-evidence shape without containerId
+    shapes = [
+        el for el in _live(elements)
+        if el.get("type") in ("rectangle", "ellipse", "diamond")
+        and el.get("backgroundColor") != EVIDENCE_BG
+    ]
+    for txt in _live(elements):
+        if txt.get("type") != "text" or txt.get("containerId"):
+            continue
+        tb = _bbox(txt)
+        if tb is None:
+            continue
+        tx1, ty1, tx2, ty2 = tb
+        # Use centroid to decide "inside"
+        cx, cy = (tx1 + tx2) / 2, (ty1 + ty2) / 2
+        for shape in shapes:
+            sb = _bbox(shape)
+            if sb is None:
+                continue
+            sx1, sy1, sx2, sy2 = sb
+            if sx1 <= cx <= sx2 and sy1 <= cy <= sy2:
+                # Skip tiny shapes (markers/dots) — they don't host text
+                if (sx2 - sx1) < 30 or (sy2 - sy1) < 30:
+                    continue
+                warnings.append(
+                    {
+                        "type": "text-floating-in-shape",
+                        "msg": (
+                            f"text '{txt.get('id')}' sits inside shape "
+                            f"'{shape.get('id')}' but has no containerId — "
+                            f"will not be centered. Bind via containerId or "
+                            f"move text outside the shape."
+                        ),
+                        "ids": [txt.get("id"), shape.get("id")],
+                    }
+                )
+                break
+
+    return warnings
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -293,6 +413,7 @@ CHECKS = [
     check_overlap,
     check_text_overflow,
     check_dangling_arrows,
+    check_text_centering,
 ]
 
 
