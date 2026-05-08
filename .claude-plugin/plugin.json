@@ -1,7 +1,7 @@
 {
   "name": "excalidraw-diagram",
-  "description": "Create Excalidraw diagrams that argue visually — varied patterns (fan-out, timeline, tree, grid), evidence artifacts, charts (bar/line/grouped), card grids, light + dark mode. Includes Python tooling for layout, lint, charts, and Playwright-based render.",
-  "version": "1.0.0",
+  "description": "Create Excalidraw diagrams that argue visually \u2014 varied patterns (fan-out, timeline, tree, grid), evidence artifacts, charts (bar/line/grouped), card grids, light + dark mode. Includes Python tooling for layout, lint, charts, and Playwright-based render.",
+  "version": "1.1.0",
   "author": {
     "name": "Gilberts Ahumada",
     "email": "gilbertsahumada@gmail.com",
