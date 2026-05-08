@@ -581,6 +581,33 @@ uv run python append_section.py base.excalidraw new_section.json
 
 Auto-namespaces seeds, renames colliding IDs (and updates internal references), reports next available y. Avoids hand-merging large JSON.
 
+### Charts & visual helpers — `references/charts.py`
+
+Pure-Python helpers that emit Excalidraw element dicts:
+
+- `bar_chart(x, y, w, h, data, ...)` — single-series vertical bars
+- `line_chart(x, y, w, h, data, ...)` — connected polyline + dot markers
+- `grouped_bar_chart(x, y, w, h, data, ...)` — multi-series side-by-side bars + legend
+- `pie_slice_approximation(cx, cy, r, data, ...)` — horizontal stacked-bar (Excalidraw can't render arcs)
+- `card_grid(x, y, cards, cols, ...)` — styled card grid (header strip + body)
+- `grid_table(x, y, headers, rows, ...)` — data table with colored header
+- `code_block(x, y, code, language, theme_name, ...)` — **syntax-highlighted code** via Pygments. One text element per token, each colored by its Pygments token type. Supports 500+ languages, light + dark themes. Cascadia mono required for alignment (fontFamily=3).
+
+```python
+from charts import code_block
+
+elements.extend(code_block(
+    x=80, y=200,
+    code='def hello():\n    print("hi")\n',
+    language="python",       # or "json", "yaml", "typescript", "rust", "bash", ...
+    font_size=14,
+    theme_name="dark",       # "dark" or "light"
+    seed_base=910000,
+))
+```
+
+Use `code_block` instead of plain dark rect + green text whenever the diagram contains real source code. It produces ~40-100 text elements per block but renders with proper IDE-like coloring.
+
 ### Examples gallery — `examples/`
 
 Six pattern starters. Copy and modify rather than build from scratch:

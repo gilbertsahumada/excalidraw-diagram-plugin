@@ -1179,6 +1179,189 @@ def card_grid(
     return elements
 
 
+def code_block(
+    x: int,
+    y: int,
+    code: str,
+    language: str = "python",
+    font_size: int = 13,
+    padding: int = 16,
+    seed_base: int = 950000,
+    theme_name: str = "dark",
+    background: str | None = None,
+    rounded: bool = True,
+) -> list[dict[str, Any]]:
+    """Generate a syntax-highlighted code block as Excalidraw elements.
+
+    Uses Pygments to tokenize the code, then emits one text element per
+    token with its own color from a palette mapped from token types.
+    A background rectangle wraps the whole block.
+
+    Limitations:
+    - Requires monospace font (fontFamily=3) for correct alignment
+    - Pygments tokenization only — no LSP-level semantic highlighting
+    - Tab handling: tabs are expanded to 4 spaces
+
+    Args:
+        x, y: top-left of the block
+        code: the source code as a multiline string
+        language: language hint for Pygments (e.g. "python", "javascript",
+                  "json", "yaml", "bash", "typescript", "go", "rust")
+        font_size: monospace font size (default 13)
+        padding: inner padding inside the background rect
+        seed_base: starting seed; needs ~3 × n_tokens room
+        theme_name: "dark" (default) or "light"
+        background: explicit bg color, or None to use theme's evidence_bg
+        rounded: rounded corners on background rect
+
+    Returns: list of Excalidraw elements (1 rect + N text spans)
+    """
+    try:
+        from pygments import lex
+        from pygments.lexers import get_lexer_by_name
+        from pygments.token import Token
+    except ImportError as e:
+        raise RuntimeError(
+            "code_block requires pygments. Install via: "
+            "uv add pygments  (or pip install pygments)"
+        ) from e
+
+    # Color theme: maps Pygments token type → hex color
+    DARK_TOKEN_COLORS = {
+        Token.Keyword: "#c4b5fd",            # purple
+        Token.Keyword.Namespace: "#c4b5fd",
+        Token.Keyword.Constant: "#c4b5fd",
+        Token.Name.Builtin: "#fbbf24",       # amber
+        Token.Name.Function: "#60a5fa",      # blue
+        Token.Name.Class: "#fbbf24",
+        Token.Name.Decorator: "#fbbf24",
+        Token.String: "#86efac",             # light green
+        Token.String.Doc: "#86efac",
+        Token.Number: "#fb923c",             # orange
+        Token.Comment: "#64748b",            # slate (muted)
+        Token.Comment.Single: "#64748b",
+        Token.Comment.Multiline: "#64748b",
+        Token.Operator: "#f87171",           # red
+        Token.Operator.Word: "#c4b5fd",
+        Token.Punctuation: "#cbd5e1",        # slate-300
+        Token.Name: "#f1f5f9",               # default text
+        Token.Literal: "#86efac",
+        Token.Generic: "#f1f5f9",
+        Token.Text: "#f1f5f9",
+        Token.Text.Whitespace: "#f1f5f9",
+    }
+    LIGHT_TOKEN_COLORS = {
+        Token.Keyword: "#7c3aed",
+        Token.Keyword.Namespace: "#7c3aed",
+        Token.Keyword.Constant: "#7c3aed",
+        Token.Name.Builtin: "#b45309",
+        Token.Name.Function: "#1e40af",
+        Token.Name.Class: "#b45309",
+        Token.Name.Decorator: "#b45309",
+        Token.String: "#047857",
+        Token.String.Doc: "#047857",
+        Token.Number: "#c2410c",
+        Token.Comment: "#64748b",
+        Token.Comment.Single: "#64748b",
+        Token.Comment.Multiline: "#64748b",
+        Token.Operator: "#dc2626",
+        Token.Operator.Word: "#7c3aed",
+        Token.Punctuation: "#374151",
+        Token.Name: "#1f2937",
+        Token.Literal: "#047857",
+        Token.Generic: "#1f2937",
+        Token.Text: "#1f2937",
+        Token.Text.Whitespace: "#1f2937",
+    }
+
+    palette = DARK_TOKEN_COLORS if theme_name == "dark" else LIGHT_TOKEN_COLORS
+    if background is None:
+        background = "#020617" if theme_name == "dark" else "#f8fafc"
+
+    def _color_for(tok_type) -> str:
+        # Walk up the token-type hierarchy until a match is found
+        t = tok_type
+        while t is not None:
+            if t in palette:
+                return palette[t]
+            t = t.parent
+        return palette[Token.Text]
+
+    # Tab expansion + tokenize
+    code_expanded = code.expandtabs(4)
+    try:
+        lexer = get_lexer_by_name(language)
+    except Exception:
+        lexer = get_lexer_by_name("text")
+    tokens = list(lex(code_expanded, lexer))
+
+    # Compute positioning. Excalidraw renders Cascadia at ~0.6 × fontSize per char
+    # (slightly wider than estimate_text_size's 0.55 multiplier — that one is
+    # for bbox sizing, not glyph metrics). Use a generous spacing here so
+    # adjacent tokens never visually overlap.
+    char_w = max(1, round(font_size * 0.6))
+    line_h = round(font_size * 1.5)
+
+    # Measure: max line length × char_w + padding, n_lines × line_h + padding
+    lines = code_expanded.split("\n")
+    max_chars = max((len(line) for line in lines), default=1)
+    n_lines = len(lines)
+    block_w = max_chars * char_w + padding * 2
+    block_h = n_lines * line_h + padding * 2
+
+    elements: list[dict[str, Any]] = []
+    seed = seed_base
+
+    # Background rect
+    bg_rect = _rect(
+        f"code_{seed}_bg", x, y, block_w, block_h,
+        seed, background, background, stroke_width=1, rounded=rounded,
+    )
+    elements.append(bg_rect)
+    seed += 1
+
+    # Walk tokens, emit one text element per non-whitespace token
+    col = 0  # current column (chars from line start)
+    line = 0
+    for tok_type, tok_text in tokens:
+        if not tok_text:
+            continue
+        if tok_text == "\n":
+            col = 0
+            line += 1
+            continue
+        # Handle multi-line tokens (e.g. multi-line strings)
+        chunks = tok_text.split("\n")
+        for ci, chunk in enumerate(chunks):
+            if ci > 0:
+                col = 0
+                line += 1
+            if not chunk:
+                continue
+            # Skip pure whitespace tokens — they take up column space but no glyph
+            if chunk.strip() == "":
+                col += len(chunk)
+                continue
+            color = _color_for(tok_type)
+            tx = x + padding + col * char_w
+            ty = y + padding + line * line_h
+            tw = len(chunk) * char_w
+            th = font_size + 4
+            t = _text(
+                f"code_{seed}_tok",
+                tx, ty, tw, th, chunk, seed,
+                color=color, font_size=font_size,
+                text_align="left", vertical_align="top",
+            )
+            # Force monospace
+            t["fontFamily"] = 3
+            elements.append(t)
+            seed += 1
+            col += len(chunk)
+
+    return elements
+
+
 def grid_table(
     x: int,
     y: int,
