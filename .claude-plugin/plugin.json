@@ -1,0 +1,22 @@
+{
+  "name": "excalidraw-diagram",
+  "description": "Create Excalidraw diagrams that argue visually — varied patterns (fan-out, timeline, tree, grid), evidence artifacts, charts (bar/line/grouped), card grids, light + dark mode. Includes Python tooling for layout, lint, charts, and Playwright-based render.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Gilberts Ahumada",
+    "email": "gilbertsahumada@gmail.com",
+    "url": "https://github.com/gilbertsahumada"
+  },
+  "homepage": "https://github.com/gilbertsahumada/excalidraw-diagram-plugin",
+  "repository": "https://github.com/gilbertsahumada/excalidraw-diagram-plugin",
+  "license": "MIT",
+  "keywords": [
+    "excalidraw",
+    "diagram",
+    "visualization",
+    "architecture",
+    "charts",
+    "youtube",
+    "documentation"
+  ]
+}
