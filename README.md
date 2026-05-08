@@ -8,6 +8,17 @@ Generate `.excalidraw` JSON diagrams that **argue visually** — fan-outs, timel
 |------------------------------|--------------|-----------|
 | ![light](./docs/preview-light.png) | ![grids](./docs/preview-grids.png) | ![dark](./docs/preview-dark.png) |
 
+## Before / after — what the tooling fixes
+
+Same prompt ("MCP host/client/server architecture"), same agent, same model. Left: skill methodology only. Right: methodology + Python tooling (`layout`, `lint`, `charts`, evidence-artifact exception).
+
+| Before — 8 lint issues | After — 0 lint issues |
+|------------------------|------------------------|
+| ![before](./docs/before-mcp.png) | ![after](./docs/after-mcp.png) |
+| Tier rectangles overlap their inner text · 6 overlap warnings · text positioned over fills without `containerId` binding · arrows partially dangling | Tier rectangles compact (label only) · all sub-text free-floating outside · 0 overlaps · all arrows bound · container ratio 14% (well under 30% threshold) |
+
+Across an entire 10-diagram run, total lint issues dropped **15 → 0** (-100%) while average elements per diagram increased **62 → 83** (+34% more content). Investing in tooling pays.
+
 ## What this plugin gives you
 
 - **Design methodology** (`SKILL.md`) — visual argument patterns, evidence artifacts, fill/stroke styles, multi-zoom architecture, dark mode
