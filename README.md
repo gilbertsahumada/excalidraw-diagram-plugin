@@ -8,6 +8,23 @@ Generate `.excalidraw` JSON diagrams that **argue visually** — fan-outs, timel
 |------------------------------|--------------|-----------|
 | ![light](./docs/preview-light.png) | ![grids](./docs/preview-grids.png) | ![dark](./docs/preview-dark.png) |
 
+### Syntax-highlighted code blocks (v1.2.0+)
+
+Code samples are tokenized by [Pygments](https://pygments.org) and rendered as native Excalidraw text elements — one per token, each with its own color. Supports 500+ languages, light + dark themes.
+
+![syntax highlighting](./docs/preview-syntax-highlighting.png)
+
+```python
+from charts import code_block
+elements.extend(code_block(
+    x=80, y=200,
+    code='def hello():\n    print("hi")\n',
+    language="python",       # 500+ Pygments lexers
+    font_size=14,
+    theme_name="dark",       # or "light"
+))
+```
+
 ## Before / after — what the tooling fixes
 
 Same prompt ("MCP host/client/server architecture"), same agent, same model. Left: skill methodology only. Right: methodology + Python tooling (`layout`, `lint`, `charts`, evidence-artifact exception).
