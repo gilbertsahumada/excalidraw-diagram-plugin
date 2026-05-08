@@ -128,6 +128,7 @@ def _rect(
     fill: str,
     stroke: str,
     stroke_width: int = 2,
+    rounded: bool = True,
 ) -> dict[str, Any]:
     el = _base(seed)
     el.update(
@@ -141,7 +142,7 @@ def _rect(
             "strokeColor": stroke,
             "backgroundColor": fill,
             "strokeWidth": stroke_width,
-            "roundness": None,
+            "roundness": {"type": 3} if rounded else None,
         }
     )
     return el
