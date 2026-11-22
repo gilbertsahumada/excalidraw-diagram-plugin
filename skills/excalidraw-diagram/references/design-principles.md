@@ -9,6 +9,16 @@ Use two tests before drawing:
 - Isomorphism: if text disappeared, would the structure still communicate the concept?
 - Education: can the viewer learn concrete mechanics, formats, or examples from the diagram?
 
+## Illustrated explanations
+
+Choose an object whose visible change carries the explanation. In a queue, follow one job as it waits, runs, and finishes. In a comparison, repeat the same input on both sides so the differing outcome is easy to spot. Draw recognizable silhouettes, marks, and labels with native editable elements. Reserve hand lettering for a focal detail such as the user's message; keep technical annotations in a readable face.
+
+For **documentation**, give readers a path they can trace. Place the actors or stages in stable positions, attach a concrete value to the handoff, and branch at the condition that changes the outcome. The [streaming reference](../examples/streaming-documentation.excalidraw) uses two lifelines and follows the text into the client. A single-component lifecycle may need only a state path.
+
+For **a presentation or YouTube diagram**, show what a viewer would actually recognize: a chat bubble, a file changing, a job moving through a queue. Give the starting state a focal position and use the remaining space to show the significant change. The [streaming chat](../examples/streaming-youtube.excalidraw) uses a typing indicator, check mark and retry control. Its layered surfaces give the chat depth; reuse that treatment where it helps distinguish foreground content. Pick light or dark for the intended setting.
+
+Inspect the rendered canvas at its intended viewing size. Can you follow the object and distinguish outcomes even without color? Group each composite illustration for editing. When lint reports overlap, inspect the named elements: shadows behind a surface, indicator lights inside a server and controls inside a mockup can intentionally overlap. Fix collisions that obscure text, connectors or meaning.
+
 ## Depth Assessment
 
 Use a simple/conceptual diagram when explaining a mental model, philosophy, or abstraction where specifics are not the point.
@@ -39,7 +49,7 @@ Aim for less than 30% of text elements inside containers.
 
 ## Bound Text Pattern
 
-Text inside a shape must be centered and bound:
+For a centered shape label, use a reciprocal binding:
 
 - The shape has `boundElements: [{"id": "text_id", "type": "text"}]`.
 - The text has `containerId: "shape_id"`.
