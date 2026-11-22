@@ -12,9 +12,12 @@
 <body>
   <div id="root"></div>
 
+  <script>
+    window.EXCALIDRAW_ASSET_PATH = new URL("./excalidraw-assets/", window.location.href).href;
+  </script>
+
   <script type="module">
-    import * as Excalidraw from "https://esm.sh/@excalidraw/excalidraw@0.18.0?bundle-deps";
-    const exportToSvg = Excalidraw.exportToSvg || Excalidraw.default?.exportToSvg || Excalidraw.utils?.exportToSvg;
+    import { exportToSvg } from "./renderer-bundle.js";
 
     window.renderDiagram = async function(jsonData) {
       try {
@@ -23,27 +26,30 @@
         const appState = data.appState || {};
         const files = data.files || {};
 
-        // Force white background in appState
         appState.viewBackgroundColor = appState.viewBackgroundColor || "#ffffff";
         appState.exportWithDarkMode = false;
 
         const svg = await exportToSvg({
-          elements: elements,
+          elements,
           appState: {
             ...appState,
             exportBackground: true,
           },
-          files: files,
+          files,
         });
 
-        // Clear any previous render
         const root = document.getElementById("root");
         root.innerHTML = "";
         root.appendChild(svg);
 
         window.__renderComplete = true;
         window.__renderError = null;
-        return { success: true, width: svg.getAttribute("width"), height: svg.getAttribute("height") };
+        return {
+          success: true,
+          width: svg.getAttribute("width"),
+          height: svg.getAttribute("height"),
+          viewBox: svg.getAttribute("viewBox"),
+        };
       } catch (err) {
         window.__renderComplete = true;
         window.__renderError = err.message;
@@ -51,7 +57,6 @@
       }
     };
 
-    // Signal that the module is loaded and ready
     window.__moduleReady = true;
   </script>
 </body>

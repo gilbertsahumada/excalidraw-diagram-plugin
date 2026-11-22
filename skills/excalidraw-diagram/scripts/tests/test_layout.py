@@ -71,3 +71,7 @@ def test_estimate_text_size_single_line():
     assert isinstance(result[1], int)
     assert result[0] > 0
     assert result[1] > 0
+
+
+def test_estimate_text_size_known_monospace_value():
+    assert estimate_text_size("hello world", 16, 3) == (97, 23)

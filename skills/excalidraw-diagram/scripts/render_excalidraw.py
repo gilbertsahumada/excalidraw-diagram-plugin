@@ -1,11 +1,11 @@
 """Render Excalidraw JSON to PNG using Playwright + headless Chromium.
 
 Usage:
-    cd .claude/skills/excalidraw-diagram/references
-    uv run python render_excalidraw.py <path-to-file.excalidraw> [--output path.png] [--scale 2] [--width 1920]
+    cd skills/excalidraw-diagram
+    python3 scripts/render_excalidraw.py <path-to-file.excalidraw> [--output path.png] [--scale 2] [--width 1920]
 
 First-time setup:
-    cd .claude/skills/excalidraw-diagram/references
+    cd skills/excalidraw-diagram/scripts
     uv sync
     uv run playwright install chromium
 """
@@ -30,7 +30,10 @@ def validate_excalidraw(data: dict) -> list[str]:
     elif not isinstance(data["elements"], list):
         errors.append("'elements' must be an array")
     elif len(data["elements"]) == 0:
-        errors.append("'elements' array is empty — nothing to render")
+        errors.append("'elements' array is empty - nothing to render")
+
+    if "files" in data and not isinstance(data["files"], dict):
+        errors.append("'files' must be an object when present")
 
     return errors
 
@@ -76,14 +79,6 @@ def render(
     max_width: int = 1920,
 ) -> Path:
     """Render an .excalidraw file to PNG. Returns the output PNG path."""
-    # Import playwright here so validation errors show before import errors
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        print("ERROR: playwright not installed.", file=sys.stderr)
-        print("Run: cd .claude/skills/excalidraw-diagram/references && uv sync && uv run playwright install chromium", file=sys.stderr)
-        sys.exit(1)
-
     # Read and validate
     raw = excalidraw_path.read_text(encoding="utf-8")
     try:
@@ -97,6 +92,14 @@ def render(
         print(f"ERROR: Invalid Excalidraw file:", file=sys.stderr)
         for err in errors:
             print(f"  - {err}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print("ERROR: playwright not installed.", file=sys.stderr)
+        print("Run: cd skills/excalidraw-diagram/scripts && uv sync --extra dev && uv run playwright install chromium", file=sys.stderr)
         sys.exit(1)
 
     # Compute viewport size from element bounding box
@@ -114,21 +117,30 @@ def render(
     if output_path is None:
         output_path = excalidraw_path.with_suffix(".png")
 
-    # Template path (same directory as this script)
-    template_path = Path(__file__).parent / "render_template.html"
+    # Template path (skill assets directory)
+    template_path = Path(__file__).resolve().parent.parent / "assets" / "render_template.html"
     if not template_path.exists():
         print(f"ERROR: Template not found at {template_path}", file=sys.stderr)
+        sys.exit(1)
+
+    bundle_path = template_path.parent / "renderer-bundle.js"
+    if not bundle_path.exists():
+        print(f"ERROR: Renderer bundle not found at {bundle_path}", file=sys.stderr)
+        print("Run: yarn skill:bundle-renderer", file=sys.stderr)
         sys.exit(1)
 
     template_url = template_path.as_uri()
 
     with sync_playwright() as p:
         try:
-            browser = p.chromium.launch(headless=True)
+            browser = p.chromium.launch(
+                headless=True,
+                args=["--allow-file-access-from-files"],
+            )
         except Exception as e:
             if "Executable doesn't exist" in str(e) or "browserType.launch" in str(e):
                 print("ERROR: Chromium not installed for Playwright.", file=sys.stderr)
-                print("Run: cd .claude/skills/excalidraw-diagram/references && uv run playwright install chromium", file=sys.stderr)
+                print("Run: cd skills/excalidraw-diagram/scripts && uv run playwright install chromium", file=sys.stderr)
                 sys.exit(1)
             raise
 
@@ -136,12 +148,22 @@ def render(
             viewport={"width": vp_width, "height": vp_height},
             device_scale_factor=scale,
         )
+        browser_errors: list[str] = []
+        page.on("console", lambda msg: browser_errors.append(f"console:{msg.type}: {msg.text}"))
+        page.on("pageerror", lambda err: browser_errors.append(f"pageerror: {err}"))
 
-        # Load the template (use domcontentloaded to avoid timeout on slow esm.sh module streaming)
+        # Load the local renderer template.
         page.goto(template_url, wait_until="domcontentloaded")
 
-        # Wait for the ES module to load (imports from esm.sh)
-        page.wait_for_function("window.__moduleReady === true", timeout=30000)
+        # Wait for the local ES module bundle to load.
+        try:
+            page.wait_for_function("window.__moduleReady === true", timeout=30000)
+        except PlaywrightTimeoutError:
+            print("ERROR: Renderer module did not become ready.", file=sys.stderr)
+            for err in browser_errors[-20:]:
+                print(f"  - {err}", file=sys.stderr)
+            browser.close()
+            sys.exit(1)
 
         # Inject the diagram data and render
         json_str = json.dumps(data)

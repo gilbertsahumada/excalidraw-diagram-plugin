@@ -217,12 +217,11 @@ def estimate_text_size(text: str, font_size: int = 15, font_family: int = 3) -> 
     Height uses 1.4× fontSize per line (Excalidraw's default lineHeight=1.25
     plus padding).
 
-    Note: lint.py has its own inline copy of these constants for standalone use.
-    This function is the authoritative version.
+    This function is the authoritative version used by lint.py.
 
     Example:
         estimate_text_size("hello world", 16, 3)
-        # → (106, 23)  — 11 chars × 16 × 0.55 ≈ 97, rounded up; 1 line × 16 × 1.4 = 23
+        # → (97, 23)  — 11 chars × 16 × 0.55 = 96.8, rounded up; 1 line × 16 × 1.4 = 23
     """
     lines = text.split("\n")
     n_lines = max(len(lines), 1)

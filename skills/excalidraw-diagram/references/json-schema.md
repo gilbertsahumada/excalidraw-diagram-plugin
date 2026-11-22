@@ -8,7 +8,7 @@
 | `ellipse` | Entry/exit points, external systems |
 | `diamond` | Decisions, conditionals |
 | `arrow` | Connections between shapes |
-| `text` | Labels inside shapes |
+| `text` | Free-floating labels, annotations, and bound shape text |
 | `line` | Non-arrow connections |
 | `frame` | Grouping containers |
 
@@ -30,6 +30,24 @@ All elements share these:
 | `roughness` | number | 0 (smooth), 1 (default), 2 (rough) |
 | `opacity` | number | 0-100 |
 | `seed` | number | Random seed for roughness |
+
+## File Wrapper
+
+```json
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": 20
+  },
+  "files": {}
+}
+```
+
+`files` contains referenced images or binary assets keyed by file id. Leave it as `{}` when the scene has no image elements.
 
 ## Text-Specific Properties
 

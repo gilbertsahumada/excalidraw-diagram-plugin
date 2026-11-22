@@ -10,6 +10,7 @@ from lint import (
     check_dangling_arrows,
     check_container_ratio,
     check_missing_required_fields,
+    check_text_centering,
 )
 
 
@@ -89,6 +90,26 @@ def test_overlap_skips_evidence_artifacts():
     assert len(warnings) == 0
 
 
+def test_overlap_skips_dark_evidence_artifacts():
+    """Dark evidence background + overlapping text should produce 0 warnings."""
+    elements = [
+        _rect("evidence1", 100, 100, 400, 300, backgroundColor="#020617"),
+        _text("code1", 110, 110, 380, 280, text="some code"),
+    ]
+    warnings = check_overlap(elements)
+    assert len(warnings) == 0
+
+
+def test_overlap_skips_custom_lint_container():
+    """Nested UI/card containers can opt out of overlap warnings."""
+    elements = [
+        _rect("outer", 100, 100, 400, 300, customData={"lintIgnoreOverlaps": True}),
+        _rect("inner", 120, 120, 100, 50),
+    ]
+    warnings = check_overlap(elements)
+    assert len(warnings) == 0
+
+
 def test_text_overflow_warns_on_wide_text():
     """Text with 50 chars in a small container should produce at least 1 warning."""
     container = _rect("c1", 100, 100, 100, 100, boundElements=[{"id": "t1"}])
@@ -144,3 +165,12 @@ def test_missing_fields_detected():
     warnings = check_missing_required_fields(elements)
     assert len(warnings) == 1
     assert warnings[0]["type"] == "missing-required"
+
+
+def test_text_centering_allows_dark_evidence_text():
+    elements = [
+        _rect("evidence1", 100, 100, 400, 300, backgroundColor="#020617"),
+        _text("code1", 110, 110, 380, 20, text="some code"),
+    ]
+    warnings = check_text_centering(elements)
+    assert warnings == []
