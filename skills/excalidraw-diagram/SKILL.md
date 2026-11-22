@@ -9,6 +9,8 @@ Create `.excalidraw` JSON diagrams that argue visually, render them, inspect the
 
 ## Quick Workflow
 
+Start the canvas with the diagram itself. By default omit the title, kicker, subtitle and footer. Keep text next to the element it explains: a name, a value, a decision or a change. Include framing copy only if the user asks for it. Use the [compact Company Brain diagram](examples/company-brain.excalidraw) as the reference for text density.
+
 1. Identify the viewer's question and the object they can follow to answer it. Choose a composition for the viewing context using [Illustrated explanations](references/design-principles.md#illustrated-explanations). A diagram for YouTube is a static editable canvas and PNG unless motion is requested.
 2. Read `references/color-palette.md` before choosing colors.
 3. For technical diagrams, research actual formats, event names, APIs, and payloads before drawing.
@@ -67,6 +69,7 @@ yarn skill:bundle-renderer
 - The `.excalidraw` file is valid JSON with `type`, `version`, `source`, `elements`, `appState`, and `files`.
 - Lint has no unexpected issues.
 - The PNG was rendered and visually inspected.
+- Remove any label whose absence leaves the diagram equally clear.
 - Text is legible, not clipped, and not overlapping.
 - Arrows connect clearly and avoid crossing through primary content.
 - Technical diagrams include concrete evidence artifacts.
