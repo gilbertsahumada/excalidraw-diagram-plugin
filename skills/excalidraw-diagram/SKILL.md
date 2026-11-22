@@ -9,7 +9,7 @@ Create `.excalidraw` JSON diagrams that argue visually, render them, inspect the
 
 ## Quick Workflow
 
-1. Clarify the diagram target: conceptual, technical, architecture, timeline, comparison, or workflow.
+1. Identify the viewer's question and the object they can follow to answer it. Choose a composition for the viewing context using [Illustrated explanations](references/design-principles.md#illustrated-explanations). A diagram for YouTube is a static editable canvas and PNG unless motion is requested.
 2. Read `references/color-palette.md` before choosing colors.
 3. For technical diagrams, research actual formats, event names, APIs, and payloads before drawing.
 4. Pick visual patterns from `references/patterns.md`; avoid uniform box grids as the whole diagram.
@@ -32,7 +32,7 @@ Read only what the task needs:
 ## Hard Rules
 
 - Default to free-floating text. Use containers only when the shape itself represents a thing, decision, state, or process.
-- Text inside a shape must be bound with `containerId`, listed in the shape's `boundElements`, horizontally centered, and vertically centered with a text bbox close to actual text height.
+- Bind a shape's centered label with `containerId` and the reciprocal `boundElements` entry. In an illustrated interface, group independently positioned content (such as message text and a typing indicator) with its surface so the composition moves together.
 - For technical diagrams, include evidence artifacts: code, JSON/data shapes, event names, UI mockups, or concrete input/output examples.
 - Do not invent colors. Use `references/color-palette.md`.
 - Do not delegate full diagram generation to a sub-agent unless you also pass this skill's rules and validation requirements.

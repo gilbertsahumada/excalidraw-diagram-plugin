@@ -4,6 +4,13 @@ Generate `.excalidraw` JSON diagrams that **argue visually** — fan-outs, timel
 
 ## Examples
 
+### One streaming interaction, two illustrated views
+
+| Documentation: follow the fragments between server and client | YouTube: recognize the outcome in the chat |
+| --- | --- |
+| ![Server and client exchange text fragments before completion or interruption](docs/streaming-documentation.png) | ![A typing bubble branches into a completed message or a retry state](docs/streaming-youtube.png) |
+| [Editable documentation diagram](skills/excalidraw-diagram/examples/streaming-documentation.excalidraw) | [Editable YouTube diagram](skills/excalidraw-diagram/examples/streaming-youtube.excalidraw) |
+
 | Light mode (varied patterns) | Grid layouts | Dark mode |
 |------------------------------|--------------|-----------|
 | ![light](./docs/preview-light.png) | ![grids](./docs/preview-grids.png) | ![dark](./docs/preview-dark.png) |
@@ -188,7 +195,7 @@ excalidraw-diagram-plugin/
 │       │   ├── render_excalidraw.py
 │       │   ├── pyproject.toml
 │       │   └── tests/           # pytest suite
-│       └── examples/            # 7 pattern starters
+│       └── examples/            # pattern starters and illustrated diagrams
 ├── LICENSE
 └── README.md
 ```
