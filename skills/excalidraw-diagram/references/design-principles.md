@@ -74,5 +74,5 @@ Use `scripts/layout.py::estimate_text_size()` to calculate bbox height.
 - `fontFamily: 3`.
 - `roughness: 0` for professional/technical diagrams unless hand-drawn is requested.
 - `opacity: 100`; use color and size for hierarchy instead of transparency.
-- Use free-floating titles and captions instead of cards around section text.
+- Place essential labels at the relevant object or connector. In the Company Brain example, “Tú apruebas” identifies who authorizes publication, while CSV and PDF show what changed in the same issue.
 - Keep text readable at exported PNG size.

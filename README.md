@@ -4,6 +4,12 @@ Generate `.excalidraw` JSON diagrams that **argue visually** — fan-outs, timel
 
 ## Examples
 
+### Company Brain: from email to GitHub issue
+
+![Two emails propose creating and updating one GitHub issue, with human approval](docs/company-brain.png)
+
+[Editable diagram](skills/excalidraw-diagram/examples/company-brain.excalidraw)
+
 ### One streaming interaction, two illustrated views
 
 | Documentation: follow the fragments between server and client | YouTube: recognize the outcome in the chat |
