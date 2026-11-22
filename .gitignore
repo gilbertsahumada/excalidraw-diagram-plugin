@@ -5,4 +5,5 @@ __pycache__/
 .DS_Store
 *.png
 !docs/*.png
+!skills/excalidraw-diagram/evaluation/*/*.png
 node_modules/

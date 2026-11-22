@@ -1,0 +1,13 @@
+{
+  "name": "excalidraw-diagram-plugin",
+  "private": true,
+  "scripts": {
+    "skill:bundle-renderer": "esbuild skills/excalidraw-diagram/assets/renderer-entry.js --bundle --format=esm --outfile=skills/excalidraw-diagram/assets/renderer-bundle.js && node skills/excalidraw-diagram/scripts/copy_renderer_assets.mjs"
+  },
+  "devDependencies": {
+    "@excalidraw/excalidraw": "0.18.1",
+    "esbuild": "0.28.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  }
+}

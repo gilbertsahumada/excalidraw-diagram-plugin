@@ -18,10 +18,11 @@ import json
 import sys
 from typing import Any
 
-# Background color used by the skill's "evidence artifact" pattern (dark rect
-# holding code-snippet text).  Overlap between this rect and its children is
-# intentional and should not be flagged.
-EVIDENCE_BG = "#1e293b"
+from layout import estimate_text_size
+
+# Background colors used by the skill's evidence artifact patterns. Overlap
+# between these rects and their child text is intentional.
+EVIDENCE_BGS = {"#1e293b", "#020617"}
 
 
 # ---------------------------------------------------------------------------
@@ -118,7 +119,10 @@ def check_overlap(elements: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 larger_el = a
             else:
                 larger_el = b
-            if larger_el.get("backgroundColor") == EVIDENCE_BG:
+            if larger_el.get("backgroundColor") in EVIDENCE_BGS:
+                continue
+            custom_data = larger_el.get("customData")
+            if isinstance(custom_data, dict) and custom_data.get("lintIgnoreOverlaps"):
                 continue
             smaller = min(area_a, area_b)
             ratio = inter / smaller if smaller > 0 else 0.0
@@ -152,12 +156,7 @@ def check_text_overflow(elements: list[dict[str, Any]]) -> list[dict[str, Any]]:
             continue
         text = el.get("text", "") or ""
         font_size = el.get("fontSize", 16) or 16
-        lines = text.split("\n") if text else [""]
-        max_line_chars = max((len(line) for line in lines), default=0)
-        n_lines = len(lines)
-
-        est_w = max_line_chars * font_size * 0.55
-        est_h = n_lines * font_size * 1.4
+        est_w, est_h = estimate_text_size(text, int(font_size), int(el.get("fontFamily", 3) or 3))
 
         c_w = container.get("width", 0) or 0
         c_h = container.get("height", 0) or 0
@@ -167,7 +166,7 @@ def check_text_overflow(elements: list[dict[str, Any]]) -> list[dict[str, Any]]:
             warnings.append(
                 {
                     "type": "text-overflow",
-                    "msg": f"text '{eid}' ({max_line_chars} chars x {int(font_size)}px) "
+                    "msg": f"text '{eid}' ({len(max(text.split(chr(10)) if text else [''], key=len))} chars x {int(font_size)}px) "
                     f"likely exceeds container '{cid}' (width {int(c_w)}, est. {int(est_w)})",
                     "ids": [eid, cid],
                 }
@@ -176,7 +175,7 @@ def check_text_overflow(elements: list[dict[str, Any]]) -> list[dict[str, Any]]:
             warnings.append(
                 {
                     "type": "text-overflow",
-                    "msg": f"text '{eid}' ({n_lines} lines x {int(font_size)}px) "
+                    "msg": f"text '{eid}' ({max(text.count(chr(10)) + 1, 1)} lines x {int(font_size)}px) "
                     f"likely exceeds container '{cid}' (height {int(c_h)}, est. {int(est_h)})",
                     "ids": [eid, cid],
                 }
@@ -294,7 +293,7 @@ def check_text_centering(elements: list[dict[str, Any]]) -> list[dict[str, Any]]
       3. Container's boundElements does not list back the bound text
          → reverse link missing, Excalidraw can't center.
 
-    Evidence artifacts (backgroundColor == EVIDENCE_BG) are exempt — code
+    Evidence artifacts (`EVIDENCE_BGS`) are exempt — code
     blocks intentionally use top-left alignment.
     """
     warnings: list[dict[str, Any]] = []
@@ -366,7 +365,7 @@ def check_text_centering(elements: list[dict[str, Any]]) -> list[dict[str, Any]]
     shapes = [
         el for el in _live(elements)
         if el.get("type") in ("rectangle", "ellipse", "diamond")
-        and el.get("backgroundColor") != EVIDENCE_BG
+        and el.get("backgroundColor") not in EVIDENCE_BGS
     ]
     for txt in _live(elements):
         if txt.get("type") != "text" or txt.get("containerId"):

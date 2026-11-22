@@ -522,6 +522,15 @@ def grouped_bar_chart(
     if strokes is None:
         strokes = ["#1e3a5f", "#1e3a5f", "#047857", "#c2410c", "#6d28d9"][:n_series]
 
+    for series_name in series_names:
+        series_categories = [cat for cat, _ in data[series_name]]
+        if series_categories != categories:
+            raise ValueError(
+                "grouped_bar_chart: all series must share the same category "
+                f"names in the same order; '{series_name}' has {series_categories}, "
+                f"expected {categories}"
+            )
+
     # Compute max value across all series
     max_val = max(v for series_data in data.values() for _, v in series_data)
     if max_val <= 0:
@@ -1147,6 +1156,7 @@ def card_grid(
         outer = _rect(outer_id, cx, cy, card_width, card_height, seed, "#ffffff", hstroke, stroke_width=2)
         outer["strokeStyle"] = stroke_style
         outer["roundness"] = {"type": 3}
+        outer["customData"] = {"lintIgnoreOverlaps": True}
         elements.append(outer)
         seed += 1
 
@@ -1161,7 +1171,8 @@ def card_grid(
         hdr_t_id = f"card_{seed}_hdr_t_{i}"
         tw = len(title) * 9
         hdr_t = _text(hdr_t_id, cx + (card_width - tw) // 2, cy + (header_height - 20) // 2,
-                       tw, 20, title, seed, color="#ffffff", font_size=16, text_align="center")
+                       tw, 20, title, seed, color="#ffffff", font_size=16,
+                       text_align="center", vertical_align="middle")
         hdr_t["containerId"] = hdr_id
         hdr["boundElements"] = [{"id": hdr_t_id, "type": "text"}]
         elements.append(hdr_t)
@@ -1604,6 +1615,13 @@ def grid_table(
     total_w = n_cols * col_width
     total_h = header_height + n_rows * row_height
 
+    for row_i, row_data in enumerate(rows):
+        if len(row_data) != n_cols:
+            raise ValueError(
+                "grid_table: each row must match len(headers); "
+                f"row {row_i} has {len(row_data)} cells, expected {n_cols}"
+            )
+
     if title:
         tw = len(title) * 10
         elements.append(_text(
@@ -1629,6 +1647,7 @@ def grid_table(
             cx + (col_width - tw) // 2, y + (header_height - th) // 2,
             tw, th, hdr, seed,
             color=header_text_color, font_size=15, text_align="center",
+            vertical_align="middle",
         )
         text_el["containerId"] = rect_id
         elements.append(text_el)
@@ -1655,6 +1674,7 @@ def grid_table(
                 cx + (col_width - tw) // 2, ry + (row_height - th) // 2,
                 tw, th, cell_val, seed,
                 color=cell_text_color, font_size=14, text_align="center",
+                vertical_align="middle",
             )
             text_el["containerId"] = rect_id
             elements.append(text_el)

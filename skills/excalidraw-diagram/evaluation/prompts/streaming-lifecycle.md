@@ -1,0 +1,1 @@
+Create a technical Excalidraw diagram showing a streaming lifecycle from agent to UI: request, run started, deltas, tool calls, UI updates, errors, and run finished. Use a timeline and concrete event names.

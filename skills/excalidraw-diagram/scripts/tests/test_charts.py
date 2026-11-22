@@ -6,7 +6,8 @@ import os
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from charts import bar_chart, line_chart
+from charts import bar_chart, card_grid, grid_table, grouped_bar_chart, line_chart
+from lint import check_overlap, check_text_centering
 
 
 # ---------------------------------------------------------------------------
@@ -61,16 +62,43 @@ def test_line_chart_has_line_element():
 
 
 def test_grouped_bar_chart():
-    """If grouped_bar_chart exists, verify it returns non-empty elements."""
-    try:
-        from charts import grouped_bar_chart
-    except ImportError:
-        pytest.skip("grouped_bar_chart not yet added")
+    """Verify grouped_bar_chart returns non-empty elements."""
     result = grouped_bar_chart(
         0, 0, 800, 400,
         {"A": [("x", 1), ("y", 2)], "B": [("x", 3), ("y", 4)]},
     )
     assert len(result) > 0
+
+
+def test_grouped_bar_chart_rejects_mismatched_categories():
+    with pytest.raises(ValueError):
+        grouped_bar_chart(
+            0, 0, 800, 400,
+            {"A": [("x", 1), ("y", 2)], "B": [("x", 3), ("z", 4)]},
+        )
+
+
+def test_card_grid_does_not_emit_overlap_warnings():
+    result = card_grid(
+        0, 0,
+        [{"title": "One", "body": "Body"}, {"title": "Two", "body": "Body"}],
+        cols=2,
+    )
+    assert check_overlap(result) == []
+
+
+def test_grid_table_bound_text_is_centered():
+    result = grid_table(0, 0, ["Name", "State"], [["A", "Done"]])
+    warnings = [
+        warning for warning in check_text_centering(result)
+        if warning["type"] == "text-not-centered"
+    ]
+    assert warnings == []
+
+
+def test_grid_table_rejects_short_rows():
+    with pytest.raises(ValueError):
+        grid_table(0, 0, ["Name", "State"], [["A"]])
 
 
 # ---------------------------------------------------------------------------

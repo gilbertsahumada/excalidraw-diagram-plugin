@@ -49,9 +49,15 @@ def _validate_base(data) -> list:
 def _validate_section(data) -> list:
     if not isinstance(data, list):
         _die("section file must be a JSON array of element objects")
+    seen_ids = set()
     for i, el in enumerate(data):
         if not isinstance(el, dict):
             _die(f"section element at index {i} is not an object")
+        element_id = el.get("id")
+        if isinstance(element_id, str):
+            if element_id in seen_ids:
+                _die(f"section contains duplicate element id: {element_id}")
+            seen_ids.add(element_id)
     return data
 
 

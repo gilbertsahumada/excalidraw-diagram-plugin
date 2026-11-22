@@ -65,13 +65,13 @@ Across an entire 10-diagram run, total lint issues dropped **15 → 0** (-100%) 
 ## What this plugin gives you
 
 - **Design methodology** (`SKILL.md`) — visual argument patterns, evidence artifacts, fill/stroke styles, multi-zoom architecture, dark mode
-- **Layout helpers** (`references/layout.py`) — `fan_out`, `timeline`, `tree`, `side_by_side`, `section`, `stack`, `grid`, `estimate_text_size`
-- **Charts** (`references/charts.py`) — `bar_chart`, `line_chart`, `grouped_bar_chart`, `pie_slice_approximation`, `card_grid`, `grid_table`, `code_block`, `file_tree`
-- **Pre-render lint** (`references/lint.py`) — overlap, dangling arrows, text overflow, container ratio (with evidence-artifact exception)
-- **Section append CLI** (`references/append_section.py`) — merge sections with auto seed-namespacing
+- **Layout helpers** (`scripts/layout.py`) — `fan_out`, `timeline`, `tree`, `side_by_side`, `section`, `stack`, `grid`, `estimate_text_size`
+- **Charts** (`scripts/charts.py`) — `bar_chart`, `line_chart`, `grouped_bar_chart`, `pie_slice_approximation`, `card_grid`, `grid_table`, `code_block`, `file_tree`
+- **Pre-render lint** (`scripts/lint.py`) — overlap, dangling arrows, text overflow, container ratio (with evidence-artifact exception)
+- **Section append CLI** (`scripts/append_section.py`) — merge sections with auto seed-namespacing
 - **Pattern gallery** (`examples/`) — 6 starter `.excalidraw` files (fan-out, timeline, tree, side-by-side, assembly-line, convergence)
-- **Render pipeline** (`references/render_excalidraw.py`) — Playwright-based PNG generation
-- **Regression tests** (`references/tests/`) — pytest suite, 20 tests
+- **Render pipeline** (`scripts/render_excalidraw.py`) — Playwright-based PNG generation
+- **Regression tests** (`scripts/tests/`) — pytest suite
 
 ## Install
 
@@ -112,7 +112,7 @@ cp -r excalidraw-diagram-plugin/skills/excalidraw-diagram .claude/skills/
 The Python tooling needs Playwright + Chromium to render `.excalidraw` → PNG. Run once after install:
 
 ```bash
-cd .claude/skills/excalidraw-diagram/references
+cd .claude/skills/excalidraw-diagram/scripts
 uv sync
 uv run playwright install chromium
 ```
@@ -136,7 +136,7 @@ The skill auto-detects intent, selects appropriate visual patterns, and produces
 ## Manual render
 
 ```bash
-cd .claude/skills/excalidraw-diagram/references
+cd .claude/skills/excalidraw-diagram/scripts
 uv run python render_excalidraw.py /path/to/diagram.excalidraw
 # → PNG written next to the .excalidraw file
 ```
@@ -178,15 +178,17 @@ excalidraw-diagram-plugin/
 │       │   ├── color-palette.md
 │       │   ├── element-templates.md
 │       │   ├── json-schema.md
+│       ├── assets/              # renderer and fonts
+│       ├── evaluation/          # examples and comparison report
+│       ├── scripts/
 │       │   ├── layout.py        # coord helpers
 │       │   ├── lint.py          # pre-render checks
 │       │   ├── charts.py        # bar/line/grouped/grid_table/card_grid
 │       │   ├── append_section.py
 │       │   ├── render_excalidraw.py
-│       │   ├── render_template.html
 │       │   ├── pyproject.toml
 │       │   └── tests/           # pytest suite
-│       └── examples/            # 6 pattern starters
+│       └── examples/            # 7 pattern starters
 ├── LICENSE
 └── README.md
 ```

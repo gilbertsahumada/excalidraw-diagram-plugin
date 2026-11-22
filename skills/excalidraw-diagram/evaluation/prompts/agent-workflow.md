@@ -1,0 +1,1 @@
+Create a technical Excalidraw diagram showing an AI coding agent workflow: user intent, planner, tools, subagents, filesystem, tests, and final review. Include evidence artifacts that show a tool-call payload and a validation checklist.
