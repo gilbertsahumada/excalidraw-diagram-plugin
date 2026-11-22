@@ -72,7 +72,7 @@ def _compute_seed_offset(base_elements: list) -> int:
 
 def _build_id_mapping(base_elements: list, new_elements: list) -> dict:
     base_ids = {el["id"] for el in base_elements if "id" in el}
-    used_ids = set(base_ids)
+    used_ids = base_ids | {el["id"] for el in new_elements if "id" in el}
     mapping: dict[str, str] = {}
     for el in new_elements:
         old_id = el.get("id")
@@ -86,8 +86,6 @@ def _build_id_mapping(base_elements: list, new_elements: list) -> dict:
                 new_id = f"{old_id}_{n}"
             mapping[old_id] = new_id
             used_ids.add(new_id)
-        else:
-            used_ids.add(old_id)
     return mapping
 
 
